@@ -18,6 +18,8 @@ Longan Labs CANBED Dual powered by RP2040 microcontroller, with dual CAN interfa
 Library: https://github.com/Longan-Labs/CANBedDual_Arduino_Lib  
 ![image](https://github.com/user-attachments/assets/166ab3f9-509d-491a-bf40-d8cc84eb1994)
 
+## Vehicle
+
 
 
 
