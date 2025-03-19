@@ -10,4 +10,10 @@ There is no matching ABS configuration for the very last of the mark 1 FG Falcon
 ## Solution
 Trick the ABS module into working by telling it is working with a Boss 5.4 Litre engine, by intercepting and editing the CAN traffic sent to the ABS Module.
 
+## Hardware
+Longan Labs CANBED Dual powered by RP2040 microcontroller, with dual CAN interfaces.  
+Library: https://github.com/Longan-Labs/CANBedDual_Arduino_Lib  
+![image](https://github.com/user-attachments/assets/fc23a208-fd06-4c0e-a266-e573ee009913)
+
+
 
