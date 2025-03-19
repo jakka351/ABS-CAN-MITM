@@ -1,4 +1,4 @@
-![TPSASlogotrans](https://github.com/user-attachments/assets/05cb5cdc-1c9e-474e-89eb-074462c9b788)
+<img src="https://github.com/user-attachments/assets/05cb5cdc-1c9e-474e-89eb-074462c9b788" height=30%" width="30%" />
 
 # Isolated ABS Module CAN Interface
 
