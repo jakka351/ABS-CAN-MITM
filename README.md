@@ -19,6 +19,8 @@ Library: https://github.com/Longan-Labs/CANBedDual_Arduino_Lib
 ![image](https://github.com/user-attachments/assets/166ab3f9-509d-491a-bf40-d8cc84eb1994)
 
 ## Vehicle
+![image](https://github.com/user-attachments/assets/d15c7d22-bcca-4277-9383-27cd10da4402)
+
 ![image](https://github.com/user-attachments/assets/88baecad-9432-44ae-ac9f-5dc6e66a6231)
 
 
