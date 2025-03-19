@@ -113,15 +113,8 @@ void loop()
         Serial.println("PCMCAN");
         Serial.print("id = ");
         Serial.println(id);
-        Serial.print("ext = ");
-        Serial.println(ext);
-        Serial.print("rtr = ");
-        Serial.println(rtr);
-        Serial.print("fd = ");
-        Serial.println(fd);
         Serial.print("len = ");
         Serial.println(len);
-
         for(int i=0; i<len; i++)
         {
             Serial.print(dtaGet[i]);
@@ -131,15 +124,15 @@ void loop()
         if (retransmitOntoAbsIDs(rxId)) {
         if (isEditPCM(rxId)) {
           unsigned char newData[8];
-          memcpy(newData, buf, len);
-          editData(id, dtaGet, len);
+          //memcpy(newData, buf, len);
+          newData = editData(id, dtaGet, len);
           //ABS_CAN.sendMsgBuf(rxId, 0, len, newData);
           ABSCAN.send(id, 0, 0, 0, len, newData);
 
         } 
         else {
           //ABS_CAN.sendMsgBuf(rxId, 0, len, buf);
-          ABSCAN.send(id, 0, 0, 0, len, buf);
+          ABSCAN.send(id, 0, 0, 0, len, dtaGet);
 
         }
 
@@ -150,32 +143,24 @@ void loop()
         Serial.println("ABSCAN");
         Serial.print("id = ");
         Serial.println(id);
-        Serial.print("ext = ");
-        Serial.println(ext);
-        Serial.print("rtr = ");
-        Serial.println(rtr);
-        Serial.print("fd = ");
-        Serial.println(fd);
         Serial.print("len = ");
         Serial.println(len);
-
         for(int i=0; i<len; i++)
         {
-            Serial.print(dtaGet[i]);
+            Serial.print(dtaGet2[i]);
             Serial.t("\t");
         }
         Serial.println();
         if (retransmitOntoPcmBusIDs(id)) {
         if (isEditAbs(id)) {
           unsigned char newData[8];
-          memcpy(newData, buf, len);
-          editData(rxId, dtaGet2, len);
-          //PCM_CAN.sendMsgBuf(rxId, 0, len, newData);
+          //memcpy(newData, buf, len);
+          newData = editData(rxId, dtaGet2, len);
           PCMCAN.send(id, 0, 0, 0, len, newData);
         } 
         else {
           //PCM_CAN.sendMsgBuf(rxId, 0, len, buf);
-          PCMCAN.send(id, 0, 0, 0, len, buf);
+          PCMCAN.send(id, 0, 0, 0, len, dtaGet2);
         }
 
     }
@@ -251,7 +236,7 @@ bool retransmitAbs(uint32_t id) {
 //////////////////////////////////////////////////////
 int alter650 = 0;
 //////////////////////////////////////////////////////
-void editData(uint32_t id, unsigned char *data, unsigned char len) {
+unsigned char editData(uint32_t id, unsigned char *data, unsigned char len) {
   if (len < 8) return;  // Ensure we have 8 bytes
   // Use a 64-bit container to simplify bit operations.
   if (id == 0x210) {  // ABS_MSG_1 (CAN ID: 0x210)
@@ -264,6 +249,7 @@ void editData(uint32_t id, unsigned char *data, unsigned char len) {
     data[5] = data[5];
     data[6] = data[6];
     data[7] = data[7;]
+    return data;
   }
   else if (id == 0x623) {  // PCM_MSG_11 (CAN ID: 0x623)
     data[0] = 0x36;;
@@ -274,6 +260,7 @@ void editData(uint32_t id, unsigned char *data, unsigned char len) {
     data[5] = 0x00;
     data[6] = 0x00;
     data[7] = 0x00
+    return data;
   }
   else if (id == 0x640) {  // PCM_MSG_12 (CAN ID: 0x640)
     data[0] = 0x44;
@@ -284,6 +271,7 @@ void editData(uint32_t id, unsigned char *data, unsigned char len) {
     data[5] = 0x0C;
     data[6] = 0x86;
     data[7] = 0x00
+    return data;
   }
   else if (id == 0x650) {  // ABS CONFIGURATON NEEDS TO BE SET TO XR8 FOR THIS TO MATCH UP
     switch(alter650)
@@ -298,7 +286,7 @@ void editData(uint32_t id, unsigned char *data, unsigned char len) {
         data[6] = 0x00;
         data[7] = 0x00;
         alter650++;
-        break;
+        return data;
       case 1: 
         data[0] = 0x11;
         data[1] = 0x42;
@@ -309,12 +297,9 @@ void editData(uint32_t id, unsigned char *data, unsigned char len) {
         data[6] = 0x00;
         data[7] = 0x00;
         alter650 = 0;
-        break;
-
+        return data;
     }
   }
 }
-
-
-
 // ENDIF
+////////////////////////////////////////////////////////////////////////////
