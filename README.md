@@ -13,7 +13,9 @@ Trick the ABS module into working by telling it is working with a Boss 5.4 Litre
 ## Hardware
 Longan Labs CANBED Dual powered by RP2040 microcontroller, with dual CAN interfaces.  
 Library: https://github.com/Longan-Labs/CANBedDual_Arduino_Lib  
-![image](https://github.com/user-attachments/assets/60db1c4e-7604-4362-bfe3-b005f517b732)
+![image](https://github.com/user-attachments/assets/166ab3f9-509d-491a-bf40-d8cc84eb1994)
+
+
 
 
 
