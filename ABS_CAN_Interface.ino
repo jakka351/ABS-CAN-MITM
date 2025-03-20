@@ -82,91 +82,13 @@
 #include <Wire.h>
 #include <stdio.h>
 #include "canbed_dual.h"
-//////////////////////////////////////////////////////
+
+// Create CAN bus objects
 CANBedDual PCMCAN(0);
 CANBedDual ABSCAN(1);
-//////////////////////////////////////////////////////
-void setup()
-{
-    Serial.begin(115200);
-    pinMode(18, OUTPUT);  
-    Wire1.setSDA(6);
-    Wire1.setSCL(7);
-    Wire1.begin();
-    //SETUP CANBUS PCMCAN and ABSCAN // ABS CAN  NEEDS A TERMINATING RESISTOR 120 OHM
-    PCMCAN.init(500000);          // CAN0 baudrate: 500kb/s
-    ABSCAN.init(500000);          // CAN1 baudrate: 500kb/s
-}
-//////////////////////////////////////////////////////
-void loop()
-{
-    unsigned long id = 0;
-    int ext = 0;
-    int rtr = 0;
-    int fd = 0;
-    int len = 0;    
-    unsigned char dtaGet[100];
-    unsigned char dtaGet2[100];
-    //READ PCM CAN BUS
-    if(PCMCAN.read(&id, &ext, &rtr, &fd, &len, dtaGet))
-    {
-        Serial.println("PCMCAN");
-        Serial.print("id = ");
-        Serial.println(id);
-        Serial.print("len = ");
-        Serial.println(len);
-        for(int i=0; i<len; i++)
-        {
-            Serial.print(dtaGet[i]);
-            Serial.t("\t");
-        }
-        Serial.println();
-        if (retransmitOntoAbsIDs(rxId)) {
-        if (isEditPCM(rxId)) {
-          unsigned char newData[8];
-          //memcpy(newData, buf, len);
-          newData = editData(id, dtaGet, len);
-          //ABS_CAN.sendMsgBuf(rxId, 0, len, newData);
-          ABSCAN.send(id, 0, 0, 0, len, newData);
 
-        } 
-        else {
-          //ABS_CAN.sendMsgBuf(rxId, 0, len, buf);
-          ABSCAN.send(id, 0, 0, 0, len, dtaGet);
-
-        }
-
-    }
-    // READ ABS CANBUS
-    if(ABSCAN.read(&id, &ext, &rtr, &fd, &len, dtaGet2))
-    {
-        Serial.println("ABSCAN");
-        Serial.print("id = ");
-        Serial.println(id);
-        Serial.print("len = ");
-        Serial.println(len);
-        for(int i=0; i<len; i++)
-        {
-            Serial.print(dtaGet2[i]);
-            Serial.t("\t");
-        }
-        Serial.println();
-        if (retransmitOntoPcmBusIDs(id)) {
-        if (isEditAbs(id)) {
-          unsigned char newData[8];
-          //memcpy(newData, buf, len);
-          newData = editData(rxId, dtaGet2, len);
-          PCMCAN.send(id, 0, 0, 0, len, newData);
-        } 
-        else {
-          //PCM_CAN.sendMsgBuf(rxId, 0, len, buf);
-          PCMCAN.send(id, 0, 0, 0, len, dtaGet2);
-        }
-
-    }
-}
-//////////////////////////////////////////////////////
-const uint32_t retransmitOntoPcmBusIDs[] = {  // IDS THAT ARE RETRANSMITTED ONTO THE PCM BUS
+// Define ID arrays and constants (global scope)
+const uint32_t retransmitOntoPcmBusIDs[] = {
   0x70,   // YAW_MSG_1
   0x75,   // YAW_MSG_2
   0x80,   // SAS_MSG_1
@@ -174,37 +96,60 @@ const uint32_t retransmitOntoPcmBusIDs[] = {  // IDS THAT ARE RETRANSMITTED ONTO
   0x90,   // SAS_MSG_2
   0x210,  // ABS_MSG_1  (edit)
   0x4B0,  // TCS_MSG_1
-  0x760  //
+  0x768  
 };
-const uint32_t retransmitOntoAbsBusIDs[] = { // IDS THAT ARE RETRANSMITTED ONTO THE ABS BUS
-  0x97    // PCM_MSG_1
-  0xFC,   // PCM_MSG_2
-  0x120,  // PCM_MSG_3
-  0x12D,  // PCM_MSG_4
-  0x200,  // PCM_MSG_5
-  0x207,  // PCM_MSG_6
-  0x230,  // PCM_MSG_7
-  0x425,  // PCM_MSG_15
+
+const uint32_t retransmitOntoAbsBusIDs[] = { 
+  0x97,    // PCM_MSG_1
+  0xFC,    // PCM_MSG_2
+  0x120,   // PCM_MSG_3
+  0x12D,   // PCM_MSG_4
+  0x200,   // PCM_MSG_5
+  0x207,   // PCM_MSG_6
+  0x230,   // PCM_MSG_7
+  0x425,   // PCM_MSG_15
+  0x623,   // PCM_MSG_11 (edit)
+  0x640,   // PCM_MSG_12 (edit)
+  0x650,   // PCM_MSG_13 (edit)
+  0x760
+};
+
+const uint32_t editPCM[] = {  // CAN IDs on PCM bus to edit
   0x623,  // PCM_MSG_11 (edit)
   0x640,  // PCM_MSG_12 (edit)
-  0x650,  // PCM_MSG_13 (edit)
-  0x768   //
+  0x650   // PCM_MSG_13 (edit)
 };
-const uint32_t editPCM[] = {  //INTEREPT IDS PCMCAN
-  0x623,  // PCM_MSG_11 (edit)
-  0x640,  // PCM_MSG_12 (edit)
-  0x650,  // PCM_MSG_13 (edit)
+
+const uint32_t editABS[] = {  // CAN IDs on ABS bus to edit
+  0x210   // PCM_MSG_1
 };
-const uint32_t editABS[] = {  // INTERCEPT IDS ABSCAN
-  0x210    // PCM_MSG_1
-};
-//////////////////////////////////////////////////////
-const int PCMIDs = sizeof(retransmitOntoPcmBusIDs) / sizeof(retransmitOntoPcmBusIDs[0]);
-const int ABSIDs = sizeof(retransmitOntoAbsBusIDs) / sizeof(retransmitOntoAbsBusIDs[0]);
+
+const int PCMIDs    = sizeof(retransmitOntoPcmBusIDs) / sizeof(retransmitOntoPcmBusIDs[0]);
+const int ABSIDs    = sizeof(retransmitOntoAbsBusIDs) / sizeof(retransmitOntoAbsBusIDs[0]);
 const int numPCMIDs = sizeof(editPCM) / sizeof(editPCM[0]);
 const int numABSIDs = sizeof(editABS) / sizeof(editABS[0]);
-//////////////////////////////////////////////////////
-// Check if a CAN ID should be edited for which bus...
+
+// Function prototypes
+bool isEditPCM(uint32_t id);
+bool isEditAbs(uint32_t id);
+bool retransmitPcm(uint32_t id);
+bool retransmitAbs(uint32_t id);
+unsigned char * editData(uint32_t id, unsigned char *data, unsigned char len);
+
+// Setup function
+void setup() {
+  Serial.begin(115200);
+  // Setup both CAN buses (note: ABS CAN needs a terminating 120 ohm resistor)
+  PCMCAN.init(500000);  // CAN0 baudrate: 500 kb/s
+  ABSCAN.init(500000);  // CAN1 baudrate: 500 kb/s
+
+  //pinMode(18, OUTPUT);
+  //Wire1.setSDA(6);
+  //Wire1.setSCL(7);
+  //Wire1.begin();
+}
+
+// Check if a CAN ID on PCM bus should be edited
 bool isEditPCM(uint32_t id) {
   for (int i = 0; i < numPCMIDs; i++) {
     if (id == editPCM[i])
@@ -212,54 +157,118 @@ bool isEditPCM(uint32_t id) {
   }
   return false;
 }
+
+// Check if a CAN ID on ABS bus should be edited
 bool isEditAbs(uint32_t id) {
-  for (int i = 0; i < numABSIDS; i++) {
+  for (int i = 0; i < numABSIDs; i++) {
     if (id == editABS[i])
       return true;
   }
   return false;
 }
+
+// Check if a CAN ID should be retransmitted onto the PCM bus
 bool retransmitPcm(uint32_t id) {
-  for (int i = 0; i < PCMIDS; i++) {
+  for (int i = 0; i < PCMIDs; i++) {
     if (id == retransmitOntoPcmBusIDs[i])
       return true;
   }
   return false;
 }
+
+// Check if a CAN ID should be retransmitted onto the ABS bus
 bool retransmitAbs(uint32_t id) {
-  for (int i = 0; i < ABSIDS; i++) {
+  for (int i = 0; i < ABSIDs; i++) {
     if (id == retransmitOntoAbsBusIDs[i])
       return true;
   }
   return false;
 }
-//////////////////////////////////////////////////////
+
+// Global variable for alternating data for CAN ID 0x650
 int alter650 = 0;
-//////////////////////////////////////////////////////
-unsigned char editData(uint32_t id, unsigned char *data, unsigned char len) {
-  if (len < 8) return;  // Ensure we have 8 bytes
-  // Use a 64-bit container to simplify bit operations.
+
+// Main loop function
+void loop() {
+  unsigned long id = 0;
+  int ext = 0;
+  int rtr = 0;
+  int fd = 0;
+  int len = 0;    
+  unsigned char dtaGet[7];
+  unsigned char dtaGet2[7];
+
+  // READ PCM CAN BUS
+  if (PCMCAN.read(&id, &ext, &rtr, &fd, &len, dtaGet)) {
+    Serial.println("PCMCAN");
+    Serial.print("id = ");
+    Serial.println(id);
+    Serial.print("len = ");
+    Serial.println(len);
+    for (int i = 0; i < len; i++) {
+      Serial.print(dtaGet[i]);
+    }
+    Serial.println();
+    
+    if (retransmitAbs(id)) {
+      if (isEditPCM(id)) {
+        unsigned char newData[8];
+        unsigned char *edited = editData(id, dtaGet, len);
+        memcpy(newData, edited, 8);
+        ABSCAN.send(id, 0, 0, 0, len, newData);
+      } else {
+        ABSCAN.send(id, 0, 0, 0, len, dtaGet);
+      }
+    }
+  }
+
+  // READ ABS CAN BUS
+  if (ABSCAN.read(&id, &ext, &rtr, &fd, &len, dtaGet2)) {
+    Serial.println("ABSCAN");
+    Serial.print("id = ");
+    Serial.println(id);
+    Serial.print("len = ");
+    Serial.println(len);
+    for (int i = 0; i < len; i++) {
+      Serial.print(dtaGet2[i]);
+    }
+    Serial.println();
+    
+    if (retransmitPcm(id)) {
+      if (isEditAbs(id)) {
+        unsigned char newData[8];
+        unsigned char *edited = editData(id, dtaGet2, len);
+        memcpy(newData, edited, 8);
+        PCMCAN.send(id, 0, 0, 0, len, newData);
+      } else {
+        PCMCAN.send(id, 0, 0, 0, len, dtaGet2);
+      }
+    }
+  }
+}
+
+
+// Function to edit data based on the CAN ID.
+// Returns a pointer to the modified data (the changes are made in place).
+unsigned char * editData(uint32_t id, unsigned char *data, unsigned char len) {
+  if (len < 8) return data;  // Ensure there are at least 8 bytes
+
   if (id == 0x210) {  // ABS_MSG_1 (CAN ID: 0x210)
-    // --- Decode 1-bit signals from the incoming message ---
-    data[0] = data[0];
-    data[1] = data[1];
+    // For demonstration, bytes 2-4 are set to 0 while others remain unchanged.
     data[2] = 0;
     data[3] = 0;
     data[4] = 0;
-    data[5] = data[5];
-    data[6] = data[6];
-    data[7] = data[7;]
     return data;
   }
   else if (id == 0x623) {  // PCM_MSG_11 (CAN ID: 0x623)
-    data[0] = 0x36;;
+    data[0] = 0x36;
     data[1] = 0x44;
     data[2] = 0x01;
     data[3] = 0x06;
     data[4] = 0x00;
     data[5] = 0x00;
     data[6] = 0x00;
-    data[7] = 0x00
+    data[7] = 0x00;
     return data;
   }
   else if (id == 0x640) {  // PCM_MSG_12 (CAN ID: 0x640)
@@ -270,12 +279,11 @@ unsigned char editData(uint32_t id, unsigned char *data, unsigned char len) {
     data[4] = 0x00;
     data[5] = 0x0C;
     data[6] = 0x86;
-    data[7] = 0x00
+    data[7] = 0x00;
     return data;
   }
-  else if (id == 0x650) {  // ABS CONFIGURATON NEEDS TO BE SET TO XR8 FOR THIS TO MATCH UP
-    switch(alter650)
-    {
+  else if (id == 0x650) {  // ABS configuration: alternate data for XR8 match-up
+    switch (alter650) {
       case 0:
         data[0] = 0x10;
         data[1] = 0x36;
@@ -287,7 +295,7 @@ unsigned char editData(uint32_t id, unsigned char *data, unsigned char len) {
         data[7] = 0x00;
         alter650++;
         return data;
-      case 1: 
+      case 1:
         data[0] = 0x11;
         data[1] = 0x42;
         data[2] = 0x00;
@@ -298,8 +306,10 @@ unsigned char editData(uint32_t id, unsigned char *data, unsigned char len) {
         data[7] = 0x00;
         alter650 = 0;
         return data;
+      default:
+        return data;
     }
   }
+  return data; // Default: return unmodified data if no case matches
 }
-// ENDIF
-////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
