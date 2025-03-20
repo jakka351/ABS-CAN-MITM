@@ -13,6 +13,10 @@ There is no matching ABS configuration for the very last of the mark 1 FG Falcon
 ## Solution
 Trick the ABS module into working by telling it is working with a Boss 5.4 Litre engine, by intercepting and editing the CAN traffic sent to the ABS Module.
 
+## Schematic
+The Man in the Middle attack isolates the ABS module CAN at the two red crosses:
+![image](https://github.com/user-attachments/assets/7c59c8aa-a728-439b-baf1-bfa6478fa8a4)
+
 ## Hardware
 Longan Labs CANBED Dual powered by RP2040 microcontroller, with dual CAN interfaces.  
 Library: https://github.com/Longan-Labs/CANBedDual_Arduino_Lib  
